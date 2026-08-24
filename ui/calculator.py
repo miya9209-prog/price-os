@@ -2,12 +2,12 @@ import pandas as pd
 import streamlit as st
 
 from pricing_engine import PricingInput, calculate_pricing, build_why_diagnosis
-from ui.components import won, pct, grade_badge
+from ui.components import won, pct, grade_badge, red_metric_card
 
 
 def render_calculator(defaults):
     st.subheader("신상품 가격 계산")
-    st.caption("원가를 입력하면 정상판매가, 실결제가, 공헌이익, 손익 방어선을 계산합니다.")
+    st.caption("원가를 입력하면 적용판매가, 할인적용 실결제가, 공헌이익, 손익 방어선을 계산합니다.")
 
     with st.container(border=True):
         c1, c2 = st.columns(2)
@@ -45,10 +45,10 @@ def render_calculator(defaults):
     provisional = calculate_pricing(base_inp)
 
     st.markdown("#### 판매가 확정")
-    use_manual = st.toggle("추천 정상판매가 대신 직접 판매가 입력")
+    use_manual = st.toggle("추천 판매가 대신 직접 적용판매가 입력")
     manual = None
     if use_manual:
-        manual = st.number_input("적용 정상판매가", min_value=0, value=int(provisional.list_price), step=100)
+        manual = st.number_input("적용판매가", min_value=0, value=int(provisional.list_price), step=100)
         base_inp.manual_list_price = float(manual)
 
     result = calculate_pricing(base_inp)
@@ -56,10 +56,15 @@ def render_calculator(defaults):
     st.divider()
     st.subheader("가격·수익성 결과")
     a, b, c, d = st.columns(4)
-    a.metric("추천/적용 정상판매가", won(result.list_price))
-    b.metric("쿠폰 적용 실결제가", won(result.paid_price), delta=f"-{won(result.discount_amount)}")
-    c.metric("1장당 공헌이익", won(result.contribution_profit))
-    d.metric("공헌이익률", pct(result.contribution_margin_rate))
+    with a:
+        red_metric_card("적용판매가", won(result.list_price))
+    with b:
+        discount_note = f"할인 -{won(result.discount_amount)}" if result.discount_amount > 0 else "할인 0원"
+        red_metric_card("할인적용 실결제가", won(result.paid_price), discount_note)
+    with c:
+        red_metric_card("1장당 공헌이익", won(result.contribution_profit))
+    with d:
+        red_metric_card("공헌이익률", pct(result.contribution_margin_rate))
 
     a, b, c = st.columns(3)
     a.metric(f"{expected_qty}장 총공헌이익", won(result.total_contribution_profit))
@@ -77,7 +82,7 @@ def render_calculator(defaults):
 
     st.subheader("비용 구조")
     cost_rows = [
-        ["실결제가", result.paid_price],
+        ["할인적용 실결제가", result.paid_price],
         ["상품 현금원가", -result.product_cash_cost],
         ["납부 추정부가세", -result.vat_payable],
         [f"세금평균 {tax_rate:.1f}%", -result.tax_cost],
@@ -106,7 +111,7 @@ def render_calculator(defaults):
             rows.append({
                 "쿠폰율": f"{coupon}%",
                 "광고비율": f"{ad}%",
-                "실결제가": int(r.paid_price),
+                "할인적용 실결제가": int(r.paid_price),
                 "1장 공헌이익": int(r.contribution_profit),
                 "공헌이익률": round(r.contribution_margin_rate, 1),
                 "등급": r.grade,
@@ -120,8 +125,8 @@ def render_calculator(defaults):
 - 소비자 판매가는 **부가세 포함 가격**으로 계산합니다.
 - 원가가 부가세 포함이면 매입부가세를 원가에서 분리하여 매출부가세와 상계합니다.
 - 원가가 부가세 별도이면 원가에 10% 매입부가세가 추가되는 것으로 계산합니다.
-- 할인·쿠폰은 정상판매가에서 차감하여 **실결제가**를 만든 뒤, 실결제가에 변동비를 적용합니다.
-- 세금평균·수수료·포장비·광고비는 V1에서 모두 실결제가 대비 비율로 계산합니다.
+- 할인·쿠폰은 적용판매가에서 차감하여 **할인적용 실결제가**를 만든 뒤, 할인적용 실결제가에 변동비를 적용합니다.
+- 세금평균·수수료·포장비·광고비는 V1에서 모두 할인적용 실결제가 대비 비율로 계산합니다.
 - 실제 회계·정산 기준과 다르면 `pricing_engine.py`의 계산 규칙을 회사 기준에 맞게 수정해야 합니다.
             """
         )

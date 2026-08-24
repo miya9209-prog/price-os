@@ -17,6 +17,29 @@ st.markdown(
 .block-container {padding-top: 1.5rem; padding-bottom: 3rem; max-width: 1280px;}
 [data-testid="stSidebar"] {display:none;}
 div[data-testid="stMetric"] {border: 1px solid rgba(128,128,128,.18); padding: 14px; border-radius: 12px;}
+.misharp-red-metric {
+  border: 1px solid rgba(128,128,128,.18);
+  padding: 14px;
+  border-radius: 12px;
+  min-height: 106px;
+  background: var(--background-color);
+}
+.misharp-red-metric-label {
+  font-size: 0.86rem;
+  margin-bottom: 10px;
+}
+.misharp-red-metric-value {
+  color: #d71920;
+  font-size: 2rem;
+  line-height: 1.2;
+  font-weight: 600;
+  white-space: nowrap;
+}
+.misharp-red-metric-note {
+  margin-top: 6px;
+  font-size: 0.8rem;
+  color: #d71920;
+}
 @media (max-width: 768px) {
   .block-container {padding-left: .8rem; padding-right: .8rem; padding-top: .8rem;}
   div[data-testid="stHorizontalBlock"] {gap: .35rem;}
