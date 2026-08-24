@@ -44,6 +44,8 @@ class PricingResult:
     competitor_gap_rate: Optional[float]
     max_ad_rate_before_loss: float
     max_coupon_rate_before_loss: float
+    recommended_max_ad_rate: float
+    recommended_max_discount_rate: float
 
     def to_dict(self):
         return asdict(self)
@@ -71,6 +73,36 @@ def _contribution_at_coupon(inp: PricingInput, coupon_rate: float, ad_rate: Opti
     actual_ad_rate = inp.ad_rate if ad_rate is None else ad_rate
     other = paid * ((inp.tax_rate + inp.payment_fee_rate + inp.packaging_rate + actual_ad_rate) / 100.0)
     return paid - cash_cost - vat_payable - other
+
+
+
+def _margin_at_coupon(inp: PricingInput, coupon_rate: float, ad_rate: Optional[float] = None) -> float:
+    raw_target = inp.product_cost * inp.target_multiple
+    list_price = float(inp.manual_list_price or round_price(raw_target, inp.price_rounding))
+    paid = list_price * (1 - coupon_rate / 100.0)
+    if paid <= 0:
+        return -100.0
+    contribution = _contribution_at_coupon(inp, coupon_rate, ad_rate)
+    return contribution / paid * 100.0
+
+
+def _find_max_discount_for_target_margin(inp: PricingInput, target_margin: float, max_discount: float = 50.0) -> float:
+    """Largest discount rate that still preserves the target contribution margin.
+
+    Search is intentionally capped at the UI's maximum discount range (50%).
+    """
+    if _margin_at_coupon(inp, 0.0) < target_margin:
+        return 0.0
+    if _margin_at_coupon(inp, max_discount) >= target_margin:
+        return max_discount
+    lo, hi = 0.0, max_discount
+    for _ in range(50):
+        mid = (lo + hi) / 2
+        if _margin_at_coupon(inp, mid) >= target_margin:
+            lo = mid
+        else:
+            hi = mid
+    return lo
 
 
 def _find_max_coupon(inp: PricingInput) -> float:
@@ -132,6 +164,14 @@ def calculate_pricing(inp: PricingInput) -> PricingResult:
 
     max_coupon_rate = _find_max_coupon(inp)
 
+    # Recommended operating limits: preserve the company's target contribution margin.
+    # These are more practical than the theoretical break-even limits above.
+    target_margin = 20.0
+    recommended_max_ad_rate = max(0.0, max_ad_rate - target_margin)
+    recommended_max_discount_rate = _find_max_discount_for_target_margin(
+        inp, target_margin=target_margin, max_discount=50.0
+    )
+
     return PricingResult(
         raw_target_price=raw_target,
         list_price=list_price,
@@ -155,6 +195,8 @@ def calculate_pricing(inp: PricingInput) -> PricingResult:
         competitor_gap_rate=competitor_gap_rate,
         max_ad_rate_before_loss=max_ad_rate,
         max_coupon_rate_before_loss=max_coupon_rate,
+        recommended_max_ad_rate=recommended_max_ad_rate,
+        recommended_max_discount_rate=recommended_max_discount_rate,
     )
 
 

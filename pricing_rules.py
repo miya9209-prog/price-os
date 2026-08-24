@@ -10,6 +10,7 @@ class PricingDefaults:
     coupon_rate: float = 0.0
     target_multiple: float = 2.8
     expected_qty: int = 100
+    target_contribution_margin: float = 20.0
 
 
 GRADE_RULES = (

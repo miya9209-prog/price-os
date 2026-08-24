@@ -19,3 +19,12 @@ def test_ad_rate_reduces_profit():
     low = calculate_pricing(PricingInput(product_cost=18000, ad_rate=8))
     high = calculate_pricing(PricingInput(product_cost=18000, ad_rate=15))
     assert high.contribution_profit < low.contribution_profit
+
+
+def test_recommended_safety_limits():
+    inp = PricingInput(product_cost=18000, target_multiple=2.8, ad_rate=10, coupon_rate=0)
+    r = calculate_pricing(inp)
+    assert r.recommended_max_ad_rate >= 0
+    assert 0 <= r.recommended_max_discount_rate <= 50
+    # Recommended max ad should preserve a 20 percentage-point buffer vs break-even.
+    assert round(r.max_ad_rate_before_loss - r.recommended_max_ad_rate, 6) == 20.0

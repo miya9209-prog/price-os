@@ -31,3 +31,21 @@ def red_metric_card(label: str, value: str, note: str | None = None):
         """,
         unsafe_allow_html=True,
     )
+
+
+def slider_scale(labels: list[str]):
+    """Render persistent ruler labels immediately above a Streamlit slider.
+
+    Streamlit normally emphasizes only the currently selected value. This helper
+    keeps the important reference values visible at all times so MD users can
+    judge the slider position at a glance on desktop and mobile.
+    """
+    cells = "".join(f'<span class="misharp-scale-label">{label}</span>' for label in labels)
+    st.markdown(
+        f"""
+        <div class="misharp-slider-scale" aria-hidden="true">
+            {cells}
+        </div>
+        """,
+        unsafe_allow_html=True,
+    )

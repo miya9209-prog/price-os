@@ -40,9 +40,32 @@ div[data-testid="stMetric"] {border: 1px solid rgba(128,128,128,.18); padding: 1
   font-size: 0.8rem;
   color: #d71920;
 }
+/* Persistent reference values shown above the slider track. */
+.misharp-slider-scale {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  width: 100%;
+  box-sizing: border-box;
+  padding: 0 0.45rem;
+  margin: 0.05rem 0 -0.40rem 0;
+  color: rgba(49, 51, 63, 0.78);
+  font-size: 0.74rem;
+  line-height: 1;
+  font-variant-numeric: tabular-nums;
+  pointer-events: none;
+}
+.misharp-scale-label {
+  min-width: 1.2rem;
+  text-align: center;
+  transform: translateX(0);
+  white-space: nowrap;
+}
 @media (max-width: 768px) {
   .block-container {padding-left: .8rem; padding-right: .8rem; padding-top: .8rem;}
   div[data-testid="stHorizontalBlock"] {gap: .35rem;}
+  .misharp-slider-scale {font-size: 0.62rem; padding-left: 0.2rem; padding-right: 0.2rem;}
+  .misharp-scale-label {min-width: 0.9rem;}
 }
 </style>
 """,

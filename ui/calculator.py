@@ -2,23 +2,51 @@ import pandas as pd
 import streamlit as st
 
 from pricing_engine import PricingInput, calculate_pricing, build_why_diagnosis
-from ui.components import won, pct, grade_badge, red_metric_card
+from ui.components import won, pct, grade_badge, red_metric_card, slider_scale
 
 
 def render_calculator(defaults):
     st.subheader("신상품 가격 계산")
-    st.caption("원가를 입력하면 적용판매가, 할인적용 실결제가, 공헌이익, 손익 방어선을 계산합니다.")
+    st.caption("원가를 입력하면 적용판매가, 할인적용 실결제가, 공헌이익과 판매 안전선을 계산합니다.")
 
     with st.container(border=True):
         c1, c2 = st.columns(2)
         with c1:
             product_cost = st.number_input("상품원가", min_value=0, value=18000, step=500, format="%d")
             cost_basis = st.radio("상품원가 부가세 기준", ["부가세 포함", "부가세 별도"], horizontal=True)
-            target_multiple = st.slider("목표 원가배수", 1.5, 5.0, float(defaults.target_multiple), 0.1)
+            st.markdown("**목표 원가배수**")
+            slider_scale(["1.5", "2.0", "2.5", "3.0", "3.5", "4.0", "4.5", "5.0"])
+            target_multiple = st.slider(
+                "목표 원가배수",
+                1.5,
+                5.0,
+                float(defaults.target_multiple),
+                0.1,
+                label_visibility="collapsed",
+            )
             rounding = st.selectbox("판매가 끝자리", ["800원 끝", "900원 끝", "100원 단위"])
         with c2:
-            ad_rate = st.slider("광고비율", 8, 15, int(defaults.ad_rate), 1)
-            coupon_rate = st.slider("할인·쿠폰율", 0, 50, int(defaults.coupon_rate), 1)
+            st.markdown("**광고비율 (%)**")
+            slider_scale(["0", "5", "10", "15"])
+            ad_rate = st.slider(
+                "광고비율",
+                0,
+                15,
+                int(defaults.ad_rate),
+                1,
+                label_visibility="collapsed",
+            )
+
+            st.markdown("**할인·쿠폰율 (%)**")
+            slider_scale([str(v) for v in range(0, 51, 5)])
+            coupon_rate = st.slider(
+                "할인·쿠폰율",
+                0,
+                50,
+                int(defaults.coupon_rate),
+                1,
+                label_visibility="collapsed",
+            )
             expected_qty = st.number_input("예상 판매수량", min_value=1, value=int(defaults.expected_qty), step=10)
             competitor = st.number_input("경쟁사 평균가격 (선택)", min_value=0, value=0, step=1000, format="%d")
 
@@ -66,10 +94,37 @@ def render_calculator(defaults):
     with d:
         red_metric_card("공헌이익률", pct(result.contribution_margin_rate))
 
-    a, b, c = st.columns(3)
-    a.metric(f"{expected_qty}장 총공헌이익", won(result.total_contribution_profit))
-    b.metric("손익분기 광고비율", pct(result.max_ad_rate_before_loss))
-    c.metric("손익분기 최대 쿠폰율", pct(result.max_coupon_rate_before_loss))
+    st.metric(f"{expected_qty}장 총공헌이익", won(result.total_contribution_profit))
+
+    st.subheader("판매 안전선")
+    st.caption("공헌이익률 20% 이상을 유지하기 위한 권장 운영 범위입니다. 손익분기점보다 실무 판단에 우선 사용하세요.")
+    s1, s2 = st.columns(2)
+    with s1:
+        with st.container(border=True):
+            st.markdown("**광고비 안전선**")
+            st.markdown(f"### 현재 {ad_rate:.0f}% → 권장 최대 {result.recommended_max_ad_rate:.1f}%")
+            ad_gap = result.recommended_max_ad_rate - ad_rate
+            if ad_gap >= 0:
+                st.caption(f"현재보다 약 {ad_gap:.1f}%p의 광고비 여력이 있습니다.")
+            else:
+                st.error(f"현재 광고비가 권장 안전선을 {abs(ad_gap):.1f}%p 초과합니다.")
+    with s2:
+        with st.container(border=True):
+            st.markdown("**할인 안전선**")
+            st.markdown(f"### 현재 {coupon_rate:.0f}% → 권장 최대 {result.recommended_max_discount_rate:.1f}%")
+            discount_gap = result.recommended_max_discount_rate - coupon_rate
+            if discount_gap >= 0:
+                st.caption(f"현재보다 약 {discount_gap:.1f}%p의 할인 여력이 있습니다.")
+            else:
+                st.error(f"현재 할인율이 권장 안전선을 {abs(discount_gap):.1f}%p 초과합니다.")
+
+    with st.expander("이론상 손익분기 한계 보기"):
+        st.write(f"광고비 손익분기 한계: **{result.max_ad_rate_before_loss:.1f}%**")
+        if result.max_coupon_rate_before_loss >= 49.999:
+            st.write("할인 손익분기 한계: **50% 초과 가능** (현재 화면의 할인 입력 상한이 50%입니다.)")
+        else:
+            st.write(f"할인 손익분기 한계: **{result.max_coupon_rate_before_loss:.1f}%**")
+        st.caption("이 수치는 공헌이익이 0원이 되는 이론적 한계입니다. 실제 판매 운영 기준으로 사용하지 마세요.")
 
     with st.container(border=True):
         grade_badge(result.grade, result.grade_label)
@@ -105,11 +160,11 @@ def render_calculator(defaults):
     st.subheader("가격 시뮬레이션")
     rows = []
     for coupon in range(0, 31, 5):
-        for ad in range(8, 16):
+        for ad in range(0, 16):
             sim = PricingInput(**{**base_inp.__dict__, "coupon_rate": float(coupon), "ad_rate": float(ad)})
             r = calculate_pricing(sim)
             rows.append({
-                "쿠폰율": f"{coupon}%",
+                "할인율": f"{coupon}%",
                 "광고비율": f"{ad}%",
                 "할인적용 실결제가": int(r.paid_price),
                 "1장 공헌이익": int(r.contribution_profit),
@@ -125,7 +180,8 @@ def render_calculator(defaults):
 - 소비자 판매가는 **부가세 포함 가격**으로 계산합니다.
 - 원가가 부가세 포함이면 매입부가세를 원가에서 분리하여 매출부가세와 상계합니다.
 - 원가가 부가세 별도이면 원가에 10% 매입부가세가 추가되는 것으로 계산합니다.
-- 할인·쿠폰은 적용판매가에서 차감하여 **할인적용 실결제가**를 만든 뒤, 할인적용 실결제가에 변동비를 적용합니다.
+- 할인은 적용판매가에서 차감하여 **할인적용 실결제가**를 만든 뒤, 할인적용 실결제가에 변동비를 적용합니다.
+- **판매 안전선**은 공헌이익률 20%를 유지하는 조건으로 광고비와 할인율의 권장 최대치를 역산합니다.
 - 세금평균·수수료·포장비·광고비는 V1에서 모두 할인적용 실결제가 대비 비율로 계산합니다.
 - 실제 회계·정산 기준과 다르면 `pricing_engine.py`의 계산 규칙을 회사 기준에 맞게 수정해야 합니다.
             """
