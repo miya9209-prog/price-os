@@ -34,13 +34,24 @@ def red_metric_card(label: str, value: str, note: str | None = None):
 
 
 def slider_scale(labels: list[str]):
-    """Render persistent ruler labels immediately above a Streamlit slider.
+    """Render reference labels at the exact proportional slider positions.
 
-    Streamlit normally emphasizes only the currently selected value. This helper
-    keeps the important reference values visible at all times so MD users can
-    judge the slider position at a glance on desktop and mobile.
+    Each label is anchored by percentage instead of flex spacing, so values with
+    different text widths (for example 5 and 10) stay centered under the same
+    slider position.
     """
-    cells = "".join(f'<span class="misharp-scale-label">{label}</span>' for label in labels)
+    if not labels:
+        return
+
+    if len(labels) == 1:
+        positions = [50.0]
+    else:
+        positions = [i * 100 / (len(labels) - 1) for i in range(len(labels))]
+
+    cells = "".join(
+        f'<span class="misharp-scale-label" style="left:{pos:.6f}%">{label}</span>'
+        for label, pos in zip(labels, positions)
+    )
     st.markdown(
         f"""
         <div class="misharp-slider-scale" aria-hidden="true">
@@ -49,3 +60,4 @@ def slider_scale(labels: list[str]):
         """,
         unsafe_allow_html=True,
     )
+
