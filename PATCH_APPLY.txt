@@ -1,0 +1,27 @@
+MISHARP DAILY REPORT v3.2.5 — 표 숫자 오른쪽 정렬 확정 패치
+
+이전 v3.2.4에서 pandas Styler의 text-align을 사용했지만,
+Streamlit의 st.dataframe 그리드가 정렬 CSS를 그대로 적용하지 않아
+숫자가 왼쪽에 표시되는 문제가 있었습니다.
+
+이번 버전은 숫자표를 공통 HTML 표로 렌더링하여
+td에 text-align:right를 직접 적용합니다.
+
+교체 파일:
+- misharp/ui/common.py
+- misharp/ui/tabs/daily.py
+- misharp/ui/tabs/product_best.py
+- misharp/ui/tabs/inventory.py
+- misharp/ui/settings.py
+
+적용 규칙:
+- 모든 숫자: 오른쪽 정렬
+- 금액/건수/수량/방문/조회/재고: 1,000단위 콤마, 소수점 없음
+- 전환율/광고비율/비율: 소수점 둘째 자리
+- 의미 있는 소수값: 소수점 둘째 자리
+- 자료없음: 자료없음
+- 전년도/전전년도 증감: 일반 지표 %, 비율 지표 %p
+- 표는 가로/세로 스크롤 가능
+- XLSX 다운로드 원본 데이터는 변경 없음
+
+DB/API/Secrets 변경 없음.
