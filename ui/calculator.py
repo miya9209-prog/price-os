@@ -14,20 +14,19 @@ def render_calculator(defaults):
         with c1:
             product_cost = st.number_input("상품원가", min_value=0, value=18000, step=500, format="%d")
             cost_basis = st.radio("상품원가 부가세 기준", ["부가세 포함", "부가세 별도"], horizontal=True)
-            st.markdown("**목표 원가배수**")
-            slider_scale(["1.5", "2.0", "2.5", "3.0", "3.5", "4.0", "4.5", "5.0"])
+            st.markdown("**상품단가X배수**")
             target_multiple = st.slider(
-                "목표 원가배수",
+                "상품단가X배수",
                 1.5,
                 5.0,
                 float(defaults.target_multiple),
                 0.1,
                 label_visibility="collapsed",
             )
+            slider_scale(["1.5", "2.0", "2.5", "3.0", "3.5", "4.0", "4.5", "5.0"])
             rounding = st.selectbox("판매가 끝자리", ["800원 끝", "900원 끝", "100원 단위"])
         with c2:
             st.markdown("**광고비율 (%)**")
-            slider_scale(["0", "5", "10", "15"])
             ad_rate = st.slider(
                 "광고비율",
                 0,
@@ -36,9 +35,9 @@ def render_calculator(defaults):
                 1,
                 label_visibility="collapsed",
             )
+            slider_scale(["0", "5", "10", "15"])
 
             st.markdown("**할인·쿠폰율 (%)**")
-            slider_scale([str(v) for v in range(0, 51, 5)])
             coupon_rate = st.slider(
                 "할인·쿠폰율",
                 0,
@@ -47,6 +46,7 @@ def render_calculator(defaults):
                 1,
                 label_visibility="collapsed",
             )
+            slider_scale([str(v) for v in range(0, 51, 5)])
             expected_qty = st.number_input("예상 판매수량", min_value=1, value=int(defaults.expected_qty), step=10)
             competitor = st.number_input("경쟁사 평균가격 (선택)", min_value=0, value=0, step=1000, format="%d")
 

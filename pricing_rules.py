@@ -8,7 +8,7 @@ class PricingDefaults:
     packaging_rate: float = 1.0
     ad_rate: float = 10.0
     coupon_rate: float = 0.0
-    target_multiple: float = 2.8
+    target_multiple: float = 2.0
     expected_qty: int = 100
     target_contribution_margin: float = 20.0
 

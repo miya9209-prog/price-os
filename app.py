@@ -40,15 +40,15 @@ div[data-testid="stMetric"] {border: 1px solid rgba(128,128,128,.18); padding: 1
   font-size: 0.8rem;
   color: #d71920;
 }
-/* Persistent reference values shown above the slider track. */
+/* Persistent reference values shown below the slider track. */
 .misharp-slider-scale {
   display: flex;
-  align-items: flex-end;
+  align-items: flex-start;
   justify-content: space-between;
   width: 100%;
   box-sizing: border-box;
   padding: 0 0.45rem;
-  margin: 0.05rem 0 -0.40rem 0;
+  margin: -0.55rem 0 0.55rem 0;
   color: rgba(49, 51, 63, 0.78);
   font-size: 0.74rem;
   line-height: 1;
@@ -120,7 +120,7 @@ else:
         "수수료": f"{DEFAULTS.payment_fee_rate}%",
         "포장비": f"{DEFAULTS.packaging_rate}%",
         "광고비": f"{DEFAULTS.ad_rate}%",
-        "목표 원가배수": f"{DEFAULTS.target_multiple}배",
+        "상품단가X배수": f"{DEFAULTS.target_multiple}배",
     })
 
 st.divider()
